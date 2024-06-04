@@ -30,6 +30,7 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
   late List<CardModel> flippedCards;
   late bool isFlipping;
   late int attempts;
+  late int score; // New variable to track score
   late Timer? timer;
 
   @override
@@ -44,6 +45,7 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
     flippedCards = [];
     isFlipping = false;
     attempts = 0;
+    score = 0; // Initialize score to 0
   }
 
   List<CardModel> generateCards() {
@@ -86,6 +88,9 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
         } else {
           flippedCards = [];
           isFlipping = false;
+          setState(() {
+            score++; // Increment score on successful match
+          });
         }
       }
     }
@@ -103,23 +108,34 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
       appBar: AppBar(
         title: Text('Memory Game'),
       ),
-      body: GridView.builder(
-        padding: EdgeInsets.all(16.0),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 10.0,
-          crossAxisSpacing: 10.0,
-          childAspectRatio: 3.0,
-        ),
-        itemCount: cards.length,
-        itemBuilder: (context, index) {
-          return CardWidget(
-            card: cards[index],
-            onPressed: () {
-              onCardPressed(index);
-            },
-          );
-        },
+      body: Column(
+        children: [
+          SizedBox(height: 20), // Add some space above the game
+          Text(
+            'Score: $score', // Display the score
+            style: TextStyle(fontSize: 24),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(16.0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 10.0,
+                crossAxisSpacing: 10.0,
+                childAspectRatio: 3.0,
+              ),
+              itemCount: cards.length,
+              itemBuilder: (context, index) {
+                return CardWidget(
+                  card: cards[index],
+                  onPressed: () {
+                    onCardPressed(index);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
