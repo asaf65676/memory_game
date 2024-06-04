@@ -30,7 +30,7 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
   late List<CardModel> flippedCards;
   late bool isFlipping;
   late int attempts;
-  late int score; // New variable to track score
+  late int score;
   late Timer? timer;
 
   @override
@@ -45,7 +45,7 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
     flippedCards = [];
     isFlipping = false;
     attempts = 0;
-    score = 0; // Initialize score to 0
+    score = 0;
   }
 
   List<CardModel> generateCards() {
@@ -89,11 +89,17 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
           flippedCards = [];
           isFlipping = false;
           setState(() {
-            score++; // Increment score on successful match
+            score++;
           });
         }
       }
     }
+  }
+
+  void resetGame() {
+    setState(() {
+      initializeGame();
+    });
   }
 
   @override
@@ -110,10 +116,20 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
       ),
       body: Column(
         children: [
-          SizedBox(height: 20), // Add some space above the game
-          Text(
-            'Score: $score', // Display the score
-            style: TextStyle(fontSize: 24),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Score: $score',
+                style: TextStyle(fontSize: 24),
+              ),
+              SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: resetGame,
+                child: Text('Reset Game'),
+              ),
+            ],
           ),
           Expanded(
             child: GridView.builder(
