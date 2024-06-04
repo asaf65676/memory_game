@@ -1,55 +1,167 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MemoryGame());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class MemoryGame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: Scaffold(body: Center(child: GameRwo(4))));
+    return MaterialApp(
+      title: 'Memory Game',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MemoryGamePage(),
+    );
   }
 }
 
-class GameColumn extends StatelessWidget {
-  final int columnNumber;
-  const GameColumn(this.columnNumber);
+class MemoryGamePage extends StatefulWidget {
+  @override
+  _MemoryGamePageState createState() => _MemoryGamePageState();
+}
+
+class _MemoryGamePageState extends State<MemoryGamePage> {
+  late List<CardModel> cards;
+  late List<CardModel> flippedCards;
+  late bool isFlipping;
+  late int attempts;
+  late Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeGame();
+  }
+
+  void initializeGame() {
+    cards = generateCards();
+    cards.shuffle();
+    flippedCards = [];
+    isFlipping = false;
+    attempts = 0;
+  }
+
+  List<CardModel> generateCards() {
+    List<String> words = [
+      'Apple',
+      'Banana',
+      'Cherry',
+      'Grape',
+      'Lemon',
+      'Orange',
+      'Peach',
+      'Strawberry',
+    ];
+    List<CardModel> generatedCards = [];
+    for (String word in words) {
+      generatedCards.add(CardModel(word: word, isFlipped: false));
+      generatedCards.add(CardModel(word: word, isFlipped: false));
+    }
+    return generatedCards;
+  }
+
+  void onCardPressed(int index) {
+    if (!isFlipping && !flippedCards.contains(cards[index])) {
+      setState(() {
+        cards[index].flip();
+        flippedCards.add(cards[index]);
+      });
+      if (flippedCards.length == 2) {
+        isFlipping = true;
+        attempts++;
+        if (flippedCards[0].word != flippedCards[1].word) {
+          timer = Timer(Duration(seconds: 1), () {
+            setState(() {
+              flippedCards[0].flip();
+              flippedCards[1].flip();
+              flippedCards = [];
+              isFlipping = false;
+            });
+          });
+        } else {
+          flippedCards = [];
+          isFlipping = false;
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> buttons = [];
-    for (int i = 0; i < columnNumber; i++) {
-      final button = Container(
-        padding: EdgeInsets.all(10),
-        color: Color.fromARGB(255, 33, 243, 37),
-        child: ElevatedButton(
-          onPressed: () => {},
-          child: Text('Press me $i'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Memory Game'),
+      ),
+      body: GridView.builder(
+        padding: EdgeInsets.all(16.0),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 10.0,
+          crossAxisSpacing: 10.0,
+          childAspectRatio: 3.0,
         ),
-      );
-      buttons.add(button);
-    }
-
-    return Column(children: buttons);
+        itemCount: cards.length,
+        itemBuilder: (context, index) {
+          return CardWidget(
+            card: cards[index],
+            onPressed: () {
+              onCardPressed(index);
+            },
+          );
+        },
+      ),
+    );
   }
 }
 
-class GameRwo extends StatelessWidget {
-  final int rowsNumber;
-  const GameRwo(this.rowsNumber);
+class CardWidget extends StatelessWidget {
+  final CardModel card;
+  final Function() onPressed;
+
+  CardWidget({required this.card, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> rows = [];
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: card.isFlipped ? Colors.white : Colors.blue,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Center(
+          child: Text(
+            card.isFlipped ? card.word : '?',
+            style: TextStyle(
+              fontSize: 40.0,
+              fontWeight: FontWeight.bold,
+              color: card.isFlipped ? Colors.black : Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-    for (int i = 0; i < rowsNumber; i++) {
-      // rows.add(buildColumn(4));
-      rows.add(GameColumn(4));
-    }
+class CardModel {
+  final String word;
+  bool isFlipped;
 
-    return Row(children: rows);
+  CardModel({required this.word, required this.isFlipped});
+
+  void flip() {
+    isFlipped = !isFlipped;
   }
 }
