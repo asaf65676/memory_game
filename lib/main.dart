@@ -1,110 +1,105 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
+// הפונקציה הראשית של האפליקציה
 void main() {
   runApp(MemoryGame());
 }
 
+// ויידג'ט ראשי של האפליקציה
 class MemoryGame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Memory Game',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MemoryGamePage(),
+      title: 'משחק הזיכרון', // הגדרת הכותרת
+      home: MemoryGamePage(), // הגדרת העמוד הראשי של האפליקציה שהוא עמוד המשחק
     );
   }
 }
 
+// ויידג'ט Stateful של הדף הראשי של המשחק
 class MemoryGamePage extends StatefulWidget {
   @override
   _MemoryGamePageState createState() => _MemoryGamePageState();
 }
 
+// מצב הדף הראשי של המשחק
 class _MemoryGamePageState extends State<MemoryGamePage> {
-  late List<CardModel> cards;
-  late List<CardModel> flippedCards;
-  late bool isFlipping;
-  late int attempts;
-  late int score;
-  late Timer? timer;
+  late List<AllTheCard> cards; // רשימת כל הקלפים במשחק
+  late List<AllTheCard> openCards; // רשימת הקלפים שפתוחים עכשיו
+  late int score; // מונה הניקוד של השחקן
+  late Timer? timer; // טיימר לסגירת קלפים אם לא נמצאה התאמה
 
   @override
   void initState() {
     super.initState();
-    initializeGame();
+    gameReset(); // אתחול המשחק בתחילת הפעלת הדף
   }
 
-  void initializeGame() {
-    cards = generateCards();
-    cards.shuffle();
-    flippedCards = [];
-    isFlipping = false;
-    attempts = 0;
-    score = 0;
+  // פונקציה לאיפוס המשחק
+  void buttonResetGame() {
+    setState(() {
+      gameReset(); // אתחול המשחק מחדש
+    });
   }
 
-  List<CardModel> generateCards() {
-    List<String> words = [
-      'Apple',
-      'Banana',
-      'Cherry',
-      'Grape',
-      'Lemon',
-      'Orange',
-      'Peach',
-      'Strawberry',
-    ];
-    List<CardModel> generatedCards = [];
+  // אתחול המשחק: איפוס כל המשתנים
+  void gameReset() {
+    cards = generateCards(); // יצירת רשימת קלפים
+    cards.shuffle(); // ערבוב הקלפים
+    openCards = []; // איפוס רשימת הקלפים שנפתחו
+    score = 0; // איפוס מונה הניקוד
+  }
+
+  // יצירת רשימת הקלפים
+  List<AllTheCard> generateCards() {
+    // רשימת מילים שתשמש בתור הערכים שעל הקלפים
+    List<String> words = ['סגול','צהוב','חום','לבן','אפור','שחור','ירוק','אדום',];
+
+    List<AllTheCard> generatedCards = []; // פתיחת מערך ריק
+
     for (String word in words) {
-      generatedCards.add(CardModel(word: word, isFlipped: false));
-      generatedCards.add(CardModel(word: word, isFlipped: false));
+      generatedCards.add(AllTheCard(word: word, isFlipped: false)); // יצירת זוג קלפים עבור כל מילה
+      generatedCards.add(AllTheCard(word: word, isFlipped: false));
     }
-    return generatedCards;
+    return generatedCards; // החזרת רשימת הקלפים
   }
 
+  // פונקציה שמטפלת בלחיצה על קלף
   void onCardPressed(int index) {
-    if (!isFlipping && !flippedCards.contains(cards[index])) {
+    // בדיקה אם אפשר לפתוח קלף נוסף
+    if (openCards.length < 2 && !openCards.contains(cards[index])) {
       setState(() {
-        cards[index].flip();
-        flippedCards.add(cards[index]);
+        cards[index].flip(); // הפיכת הקלף
+        openCards.add(cards[index]); // הוספת הקלף לרשימת הקלפים שנפתחו
       });
-      if (flippedCards.length == 2) {
-        isFlipping = true;
-        attempts++;
-        if (flippedCards[0].word != flippedCards[1].word) {
+
+      // אם נפתחו שני קלפים
+      if (openCards.length == 2) {
+        if (openCards[0].word != openCards[1].word) {
+          // אם אין התאמה בין הקלפים
           timer = Timer(Duration(seconds: 1), () {
             setState(() {
-              flippedCards[0].flip();
-              flippedCards[1].flip();
-              flippedCards = [];
-              isFlipping = false;
+              openCards[0].flip(); // סגירת הקלף הראשון
+              openCards[1].flip(); // סגירת הקלף השני
+              openCards = []; // איפוס רשימת הקלפים שנפתחו
             });
           });
         } else {
-          flippedCards = [];
-          isFlipping = false;
+          // אם יש התאמה בין הקלפים
+          openCards = []; // איפוס רשימת הקלפים שנפתחו
           setState(() {
-            score++;
+            score++; // עדכון מונה הניקוד
           });
         }
       }
     }
   }
 
-  void resetGame() {
-    setState(() {
-      initializeGame();
-    });
-  }
-
   @override
   void dispose() {
-    timer?.cancel();
+    timer?.cancel(); // ביטול הטיימר אם קיים
     super.dispose();
   }
 
@@ -112,40 +107,43 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Memory Game'),
+        title: Text('משחק הזיכרון'), // כותרת האפליקציה
+          centerTitle: true, // מרכוז הכותרת
       ),
+      
       body: Column(
         children: [
-          SizedBox(height: 20),
-          Row(
+          Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Score: $score',
+                'Score: $score', // Display the current score
                 style: TextStyle(fontSize: 24),
               ),
-              SizedBox(width: 20),
+              SizedBox(height:20), // Add some space between the Text widget and the ElevatedButton
               ElevatedButton(
-                onPressed: resetGame,
-                child: Text('Reset Game'),
+                onPressed: buttonResetGame,
+                child: Text('Game Reset'),
               ),
             ],
           ),
+
           Expanded(
             child: GridView.builder(
               padding: EdgeInsets.all(16.0),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 10.0,
-                childAspectRatio: 3.0,
+                crossAxisCount: 4, // מספר העמודות ברשת
+                mainAxisSpacing: 10.0, // רווח אנכי בין הקלפים
+                crossAxisSpacing: 10.0, // רווח אופקי בין הקלפים
+                childAspectRatio: 3.0, // יחס גובה-רוחב של הקלפים
               ),
-              itemCount: cards.length,
+              itemCount: cards.length, // מספר הקלפים ברשת
               itemBuilder: (context, index) {
                 return CardWidget(
-                  card: cards[index],
+                  card: cards[index], // הקלף הנוכחי
                   onPressed: () {
-                    onCardPressed(index);
+                    onCardPressed(index); // פעולה לביצוע בלחיצה על הקלף
                   },
                 );
               },
@@ -157,28 +155,30 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
   }
 }
 
+// ויידג'ט של קלף בודד
 class CardWidget extends StatelessWidget {
-  final CardModel card;
-  final Function() onPressed;
+  final AllTheCard card; // מודל הקלף
+  final Function() onPressed; // פעולה לביצוע בלחיצה על הקלף
 
   CardWidget({required this.card, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: onPressed, // פעולה לביצוע בלחיצה על הקלף
       child: Container(
         decoration: BoxDecoration(
-          color: card.isFlipped ? Colors.white : Colors.blue,
-          borderRadius: BorderRadius.circular(8.0),
+          color: card.isFlipped
+              ? Colors.white
+              : Color.fromARGB(255, 170, 176, 181), // צבע הקלף תלוי אם הוא הפוך או לא
         ),
         child: Center(
           child: Text(
-            card.isFlipped ? card.word : '?',
+            card.isFlipped
+                ? card.word
+                : '?', // הצגת המילה או סימן השאלה תלוי אם הקלף הפוך
             style: TextStyle(
-              fontSize: 40.0,
-              fontWeight: FontWeight.bold,
-              color: card.isFlipped ? Colors.black : Colors.white,
+              fontSize: 40.0, // גודל הגופן של הטקסט
             ),
           ),
         ),
@@ -187,13 +187,15 @@ class CardWidget extends StatelessWidget {
   }
 }
 
-class CardModel {
-  final String word;
-  bool isFlipped;
+// מודל של קלף
+class AllTheCard {
+  final String word; // המילה שעל הקלף
+  bool isFlipped; // דגל האם הקלף הפוך
 
-  CardModel({required this.word, required this.isFlipped});
+  AllTheCard({required this.word, required this.isFlipped});
 
+  // פעולה להפיכת הקלף
   void flip() {
-    isFlipped = !isFlipped;
+    isFlipped = !isFlipped; // החלפת מצב הפתיחה של הקלף
   }
 }
